@@ -1,70 +1,60 @@
 import gradio as gr
-from huggingface_hub import InferenceClient
+from config import PERSONALITIES
+from response_manager import respond, get_personality_memory
+from components.SettingsSidebar import SettingsSidebar
 
 
-def respond(
-    message,
-    history: list[dict[str, str]],
-    system_message,
-    max_tokens,
-    temperature,
-    top_p,
-    hf_token: gr.OAuthToken,
-):
-    """
-    For more information on `huggingface_hub` Inference API support, please check the docs: https://huggingface.co/docs/huggingface_hub/v0.22.2/en/guides/inference
-    """
-    client = InferenceClient(token=hf_token.token, model="openai/gpt-oss-20b")
-
-    messages = [{"role": "system", "content": system_message}]
-
-    messages.extend(history)
-
-    messages.append({"role": "user", "content": message})
-
-    response = ""
-
-    for message in client.chat_completion(
-        messages,
-        max_tokens=max_tokens,
-        stream=True,
-        temperature=temperature,
-        top_p=top_p,
-    ):
-        choices = message.choices
-        token = ""
-        if len(choices) and choices[0].delta.content:
-            token = choices[0].delta.content
-
-        response += token
-        yield response
+def update_profile(personality, memory_store, session_id):
+    """Switch personality: clear chat, display the new personality's stored memory."""
+    system_prompt = PERSONALITIES[personality]["system_prompt"]
+    memory_items = get_personality_memory(memory_store, session_id, personality)
+    return system_prompt, [], [], memory_items, None
 
 
-"""
-For information on how to customize the ChatInterface, peruse the gradio docs: https://www.gradio.app/docs/chatinterface
-"""
-chatbot = gr.ChatInterface(
-    respond,
-    type="messages",
-    additional_inputs=[
-        gr.Textbox(value="You are a friendly Chatbot.", label="System message"),
-        gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max new tokens"),
-        gr.Slider(minimum=0.1, maximum=4.0, value=0.7, step=0.1, label="Temperature"),
-        gr.Slider(
-            minimum=0.1,
-            maximum=1.0,
-            value=0.95,
-            step=0.05,
-            label="Top-p (nucleus sampling)",
-        ),
-    ],
-)
-
+# Build the Gradio UI
 with gr.Blocks() as demo:
-    with gr.Sidebar():
-        gr.LoginButton()
-    chatbot.render()
+    # Shared state
+    memory_store = gr.State({})
+    session_id = gr.State(None)
 
+    # Left sidebar: Settings
+    settings = SettingsSidebar()
+
+    # Right sidebar: Memory
+    with gr.Column(scale=0):
+        gr.Markdown("## Memory")
+        memory_display = gr.JSON(value=[], label="Memory")
+
+    # Main: Chat
+    with gr.Column(scale=1):
+        chatbot = gr.ChatInterface(
+            respond,
+            additional_inputs=[
+                settings["personality_dd"],
+                settings["system_prompt"],
+                settings["max_tokens"],
+                settings["temperature"],
+                settings["top_p"],
+                memory_store,
+                session_id,
+                settings["local_toggle"],
+                settings["min_memory_importance"],
+                settings["recent_turns"],
+            ],
+            additional_outputs=[memory_store, session_id, memory_display],
+        )
+
+    settings["personality_dd"].change(
+        fn=update_profile,
+        inputs=[settings["personality_dd"], memory_store, session_id],
+        outputs=[
+            settings["system_prompt"],
+            chatbot.chatbot,
+            chatbot.chatbot_state,
+            memory_display,
+            chatbot.saved_input,
+        ],
+    )
 
 if __name__ == "__main__":
     demo.launch()

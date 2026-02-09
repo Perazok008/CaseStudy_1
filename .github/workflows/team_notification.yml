@@ -1,0 +1,39 @@
+name: Team Notification
+
+on:
+  workflow_run:
+    workflows: ["Run chatbot tests", "Sync to Hugging Face Hub"]
+    types: [completed]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ "${{ github.event.workflow_run.conclusion }}" = "success" ]; then
+            EMOJI=":white_check_mark:"
+          else
+            EMOJI=":x:"
+          fi
+
+          curl -X POST -H "Content-Type: application/json" \
+          -d "{\"content\": \"${EMOJI} **${{ github.event.workflow_run.name }}** finished with status **${{ github.event.workflow_run.conclusion }}** (triggered by ${{ github.actor }}). [View run](${{ github.event.workflow_run.html_url }})\"}" \
+          $DISCORD_WEBHOOK_URL
+
+      - name: Send Slack notification
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        run: |
+          if [ "${{ github.event.workflow_run.conclusion }}" = "success" ]; then
+            EMOJI=":white_check_mark:"
+          else
+            EMOJI=":x:"
+          fi
+
+          curl -X POST -H "Content-Type: application/json" \
+          -d "{\"text\": \"${EMOJI} *${{ github.event.workflow_run.name }}* finished with status *${{ github.event.workflow_run.conclusion }}* (triggered by ${{ github.actor }}). <${{ github.event.workflow_run.html_url }}|View run>\"}" \
+          $SLACK_WEBHOOK
