@@ -2,3 +2,4 @@ Examples/
 __pycache__/
 .vscode/
 .env
+*.mp4

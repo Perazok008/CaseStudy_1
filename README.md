@@ -19,3 +19,6 @@ An example chatbot using [Gradio](https://gradio.app), [`huggingface_hub`](https
 Default gradio chatbot project was used as a starting point.
 The CSDS553_Demo Space was used for reference, especially for local pipeline, workflows and testing
 Generative AI was used to fix some compilation errors, check types, some refactoring/translation and prompt itterating.
+Presentation: https://drive.google.com/file/d/13TplysaJCUzDuH3hnad2Luh-zscE3kSi/view?usp=sharing
+HF: https://huggingface.co/spaces/Perazok/CaseStudy_1
+GitHub: https://github.com/Perazok008/CaseStudy_1
