@@ -32,7 +32,7 @@ def SettingsSidebar():
             min_save_importance = gr.Slider(
                 minimum=1,
                 maximum=5,
-                value=2,
+                value=3,
                 step=1,
                 label="Min save importance",
                 info="Only save new memory items at or above this level.",
@@ -41,7 +41,7 @@ def SettingsSidebar():
             min_recall_importance = gr.Slider(
                 minimum=1,
                 maximum=5,
-                value=2,
+                value=3,
                 step=1,
                 label="Min recall importance",
                 info="Only send saved memories at or above this level to the model.",
