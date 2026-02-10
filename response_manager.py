@@ -126,7 +126,8 @@ def respond(
     memory_store,
     session_id,
     use_local,
-    min_importance,
+    min_recall_importance,
+    min_save_importance,
     recent_turns,
     hf_token: gr.OAuthToken = None,
     profile: gr.OAuthProfile = None,
@@ -150,8 +151,9 @@ def respond(
     # Build messages list
     messages = [{"role": "system", "content": system_message}]
 
-    # Inject memory context for items at or above the importance threshold
-    relevant = [m for m in current_memory if m.get("importance", 0) >= int(min_importance)]
+    # Inject memory context for items at or above the recall importance threshold
+    recall_threshold = int(min_recall_importance)
+    relevant = [m for m in current_memory if m.get("importance", 0) >= recall_threshold]
     if relevant:
         lines = [f"- [{m['label']}] {m['note']} (importance: {m['importance']})" for m in relevant]
         messages.append({"role": "system", "content": "Known facts about the user:\n" + "\n".join(lines)})
@@ -178,8 +180,15 @@ def respond(
         print("[WARN] Model returned empty chat text, sending fallback")
         chat_text = "Error: the model returned an empty response. Please try again."
 
+    # Filter new items by save importance threshold before persisting
+    save_threshold = int(min_save_importance)
+    saved_items = [item for item in new_items if item["importance"] >= save_threshold]
+    if len(saved_items) < len(new_items):
+        dropped = len(new_items) - len(saved_items)
+        print(f"[MEMORY] Dropped {dropped} item(s) below save threshold (importance < {save_threshold})")
+
     # Persist new memory items
-    current_memory.extend(new_items)
+    current_memory.extend(saved_items)
     store = dict(memory_store)
     user_data = dict(store.get(user_id, {}))
     user_data[personality.lower()] = current_memory

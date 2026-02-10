@@ -29,14 +29,24 @@ def SettingsSidebar():
             )
 
         with gr.Accordion("Memory", open=False):
-            min_memory_importance = gr.Slider(
+            min_save_importance = gr.Slider(
                 minimum=1,
                 maximum=5,
                 value=2,
                 step=1,
-                label="Min memory importance",
-                info="Only include memory items at or above this level.",
+                label="Min save importance",
+                info="Only save new memory items at or above this level.",
             )
+            
+            min_recall_importance = gr.Slider(
+                minimum=1,
+                maximum=5,
+                value=2,
+                step=1,
+                label="Min recall importance",
+                info="Only send saved memories at or above this level to the model.",
+            )
+
             recent_turns = gr.Slider(
                 minimum=1,
                 maximum=20,
@@ -76,6 +86,7 @@ def SettingsSidebar():
         "max_tokens": max_tokens,
         "temperature": temperature,
         "top_p": top_p,
-        "min_memory_importance": min_memory_importance,
+        "min_recall_importance": min_recall_importance,
+        "min_save_importance": min_save_importance,
         "recent_turns": recent_turns,
     }

@@ -16,7 +16,8 @@ def test_local_response():
         memory_store={},
         session_id=None,
         use_local=True,
-        min_importance=1,
+        min_recall_importance=1,
+        min_save_importance=1,
         recent_turns=5,
     )
     assert isinstance(result[0], str)

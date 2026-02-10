@@ -23,7 +23,8 @@ def test_api_response():
         memory_store={},
         session_id=None,
         use_local=False,
-        min_importance=1,
+        min_recall_importance=1,
+        min_save_importance=1,
         recent_turns=5,
         hf_token=Token(hf_token),
     )
